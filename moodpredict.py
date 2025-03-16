@@ -2,36 +2,12 @@ import streamlit as st
 from textblob import TextBlob
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 from datetime import datetime
-from matplotlib.font_manager import FontProperties
+#from matplotlib.font_manager import FontProperties
 
-# Configure page
-st.set_page_config(page_title="Mood Predictor", page_icon="😊")
-st.title("🌈 Daily Mood Predictor")
-st.write("Describe your day in two sentences, and I'll predict your mood!")
-
-# Initialize session state for mood history
-if "mood_history" not in st.session_state:
-    st.session_state.mood_history = pd.DataFrame(columns=["Date", "Sentence 1", "Sentence 2", "Predicted Mood", "Mood Score"])
-
-# Mood database with sentence-level keywords
-MOOD_KEYWORDS = {
-    'happy': ['joy', 'excited', 'celebrate', 'love', 'fun', 'smile', 'amazing'],
-    'sad': ['sad', 'lonely', 'cry', 'hurt', 'miss', 'loss', 'depressed'],
-    'energetic': ['energy', 'active', 'workout', 'run', 'dance', 'motivated'],
-    'calm': ['peaceful', 'relax', 'calm', 'serene', 'meditate', 'yoga'],
-    'creative': ['create', 'art', 'write', 'design', 'paint', 'music'],
-    'stressed': ['stress', 'busy', 'overwhelmed', 'deadline', 'pressure']
-}
-
-# Sentiment thresholds
-MOOD_THRESHOLDS = {
-    '😢 Sad': (-1.0, -0.3),
-    '😐 Neutral': (-0.3, 0.3),
-    '😊 Happy': (0.3, 1.0)
-}
-
-# Emoji mapping
+# Configuration
+CSV_FILE = "mood_history.csv"
 MOOD_EMOJIS = {
     'Happy': '😊', 
     'Sad': '😢',
@@ -42,109 +18,178 @@ MOOD_EMOJIS = {
     'Neutral': '😐'
 }
 
+# Initialize session state and load existing data
+def init_session_state():
+    if "mood_history" not in st.session_state:
+        if os.path.exists(CSV_FILE):
+            st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
+        else:
+            st.session_state.mood_history = pd.DataFrame(columns=[
+                "Date", "Sentence 1", "Sentence 2", 
+                "Predicted Mood", "Mood Score", "Emoji"
+            ])
+            
+    if "submitted_today" not in st.session_state:
+        today = datetime.now().date()
+        st.session_state.submitted_today = today in st.session_state.mood_history["Date"].dt.date.values
+
+# Configure page
+st.set_page_config(page_title="Mood Diary", page_icon="📔")
+st.title("📔 Daily Mood Diary")
+st.write("Document your daily mood with two sentences!")
+
 def analyze_mood(sentence1, sentence2):
-    # Combine sentences for sentiment analysis
     combined_text = f"{sentence1} {sentence2}"
-    
-    # Sentiment analysis
     analysis = TextBlob(combined_text)
     polarity = analysis.sentiment.polarity
     
-    # Keyword matching for mood
-    matched_moods = []
-    for mood, keywords in MOOD_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in combined_text.lower():
-                matched_moods.append(mood)
-    
-    # Combine results
-    if len(matched_moods) > 0:
-        primary_mood = max(set(matched_moods), key=matched_moods.count)
+    # Simplified mood detection for example
+    if polarity > 0.3:
+        mood = "Happy"
+    elif polarity < -0.3:
+        mood = "Sad"
     else:
-        for mood, (low, high) in MOOD_THRESHOLDS.items():
-            if low <= polarity <= high:
-                primary_mood = mood
-                break
+        mood = "Neutral"
+        
+    return mood, polarity, MOOD_EMOJIS.get(mood, "")
+
+def save_to_csv():
+    st.session_state.mood_history.to_csv(CSV_FILE, index=False)
+
+# Initialize the app
+init_session_state()
+
+# Main input form
+with st.form("daily_entry"):
+    st.subheader("Today's Entry")
     
-    return primary_mood.capitalize() if isinstance(primary_mood, str) else primary_mood, polarity
+    sentence1 = st.text_area("First sentence:", 
+                           disabled=st.session_state.submitted_today,
+                           placeholder="How are you feeling today?", height= 68)
+    
+    sentence2 = st.text_area("Second sentence:", 
+                           disabled=st.session_state.submitted_today,
+                           placeholder="What's been on your mind?", height= 68)
+    
+    submitted = st.form_submit_button("Save Today's Entry", 
+                                    disabled=st.session_state.submitted_today)
 
-# User inputs
-st.subheader("Describe your day:")
-sentence1 = st.text_area("First sentence:", placeholder="e.g., I woke up feeling refreshed and ready for the day.")
-sentence2 = st.text_area("Second sentence:", placeholder="e.g., I had a great time with my friends at lunch.")
+# Handle form submission
+if submitted and sentence1.strip() and sentence2.strip():
+    mood, score, emoji = analyze_mood(sentence1, sentence2)
+    today = datetime.now()
+    
+    new_entry = {
+        "Date": today,
+        "Sentence 1": sentence1,
+        "Sentence 2": sentence2,
+        "Predicted Mood": mood,
+        "Mood Score": score,
+        "Emoji": emoji
+    }
+    
+    # Append the new entry to the CSV file
+    new_entry_df = pd.DataFrame([new_entry])
+    new_entry_df.to_csv(CSV_FILE, mode='a', header=not os.path.exists(CSV_FILE), index=False)
+    
+    # Reload the mood history from the CSV file
+    st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
+    
+    st.session_state.submitted_today = True
+    st.success("Entry saved successfully!")
+    st.balloons()
 
-if st.button("Predict My Mood!"):
-    if sentence1.strip() and sentence2.strip():
-        mood, score = analyze_mood(sentence1.lower(), sentence2.lower())
-        
-        # Add to mood history
-        new_entry = {
-            "Date": datetime.now().strftime("%Y-%m-%d"),
-            "Sentence 1": sentence1,
-            "Sentence 2": sentence2,
-            "Predicted Mood": mood,
-            "Mood Score": score
-        }
-        st.session_state.mood_history = pd.concat([st.session_state.mood_history, pd.DataFrame([new_entry])], ignore_index=True)
-        
-        # Display result
-        st.subheader(f"Predicted Mood: {MOOD_EMOJIS.get(mood, '')} {mood}")
-        st.write(f"Mood Score: {score:.2f}")
-        st.balloons()
-    else:
-        st.warning("Please enter both sentences!")
+elif submitted:
+    st.warning("Please fill in both sentences!")
+
+# Display today's mood if available
+if st.session_state.submitted_today:
+    today = datetime.now().date()
+    today_entry = st.session_state.mood_history[
+        st.session_state.mood_history["Date"].dt.date == today
+    ].iloc[-1]  # Get the latest entry for today
+    
+    st.subheader("Today's Mood")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Predicted Mood", f"{today_entry['Predicted Mood']} {today_entry['Emoji']}")
+    with col2:
+        st.metric("Mood Score", f"{today_entry['Mood Score']:.2f}")
 
 # Display mood history
 if not st.session_state.mood_history.empty:
     st.subheader("Your Mood History")
-    st.dataframe(st.session_state.mood_history)
+    
+    # Display dataframe with formatted dates
+    display_df = st.session_state.mood_history.copy()
+    display_df["Date"] = display_df["Date"].dt.strftime("%Y-%m-%d")
+    st.dataframe(display_df.style.format({"Mood Score": "{:.2f}"}))
+    
+    # Plotting section (current month only)
+# Plotting section (current month only)
+st.subheader("Mood Timeline (Current Month)")
+current_month = datetime.now().month
+current_year = datetime.now().year
 
-    # Plot mood scores over time
-    st.subheader("Daily Mood Score Trend")
+#init_session_state()
+
+# Filter data for the current month
+st.session_state.mood_history = display_df
+st.session_state.mood_history["Date"] = pd.to_datetime(st.session_state.mood_history["Date"]).dt.tz_localize(None)
+monthly_data = st.session_state.mood_history[
+    (st.session_state.mood_history["Date"].dt.month == current_month) &
+    (st.session_state.mood_history["Date"].dt.year == current_year)
+]
+
+if not monthly_data.empty:
+    # Create a complete date range for the current month
+    first_day = datetime(current_year, current_month, 1)
+    last_day = datetime(current_year, current_month + 1, 1) - pd.Timedelta(days=1)
+    date_range = pd.date_range(first_day, last_day, freq="D")
+
+    # Create a DataFrame with the full date range
+    full_month_df = pd.DataFrame(date_range, columns=["Date"])
+    full_month_df = full_month_df.merge(monthly_data, on="Date", how="left")
+
+    # Plot the data
     fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(full_month_df["Date"], full_month_df["Mood Score"], 
+            marker='o', linestyle='-', color='skyblue', label="Mood Score")
     
-    # Plot the mood scores
-    dates = pd.to_datetime(st.session_state.mood_history["Date"])
-    scores = st.session_state.mood_history["Mood Score"]
-    ax.plot(dates, scores, marker='o', linestyle='-', color='skyblue', label="Mood Score")
+    # Add emojis for days with data
+    for date, score, emoji in zip(full_month_df["Date"], full_month_df["Mood Score"], full_month_df["Emoji"]):
+        if not pd.isna(score):  # Only plot emojis for days with data
+            ax.text(date, score + 0.0002, emoji, 
+                    fontsize=24, ha='center', va='bottom')
     
-    # Add emojis on top of data points
-    try:
-        # Use a font that supports emojis (adjust the path as needed for your system)
-        emoji_font_path = "NotoColorEmoji-Regular.ttf"  # e.g., "Segoe UI Emoji" on Windows
-        emoji_font = FontProperties(fname=emoji_font_path)
-        
-        for i, (date, score, mood) in enumerate(zip(dates, scores, st.session_state.mood_history["Predicted Mood"])):
-            # Fetch the emoji for the current mood
-            emoji = MOOD_EMOJIS.get(mood.capitalize(), '')  # Ensure mood is capitalized
-            ax.text(date, score + 0.05, emoji, 
-                    fontsize=24, ha='center', va='bottom', fontproperties=emoji_font)  # Use emoji-compatible font
-            
-        # Debugging: Verify emojis are fetched correctly
-        st.write(f"Debug: Emoji for '{mood}' is {emoji}")
-    except Exception as e:
-        st.error(f"Error rendering emojis: {e}. Please ensure the font supports emojis.")
+    # Set x-axis limits to the first and last day of the month
+    ax.set_xlim(first_day, last_day)
     
-    # Format the x-axis dates
-    ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%Y-%m-%d'))
-    plt.xticks(rotation=45)  # Rotate dates for better readability
-    
-    ax.set_xlabel("Date")
+    # Format x-axis to show only the day of the month
+    ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%d'))  # Show only day
+    plt.xticks(rotation=45)
+    ax.set_xlabel("Day of Month")
     ax.set_ylabel("Mood Score")
-    ax.set_title("Your Mood Over Time")
+    ax.set_title(f"Your Mood Over Time ({first_day.strftime('%B %Y')})")  # Show month and year in title
     ax.grid(True)
     ax.legend()
     st.pyplot(fig)
-
-    # Download mood history as CSV
+else:
+    st.info("No data available for the current month.")
+    
+    # Download button
     csv = st.session_state.mood_history.to_csv(index=False).encode('utf-8')
     st.download_button(
-        label="Download Mood History as CSV",
+        label="Download Full History",
         data=csv,
-        file_name="mood_history.csv",
+        file_name="mood_diary.csv",
         mime="text/csv"
     )
 
-# Add a fun footer
+# Display message if already submitted today
+if st.session_state.submitted_today:
+    st.info("You've already made an entry for today. Come back tomorrow!")
+
+# Footer
 st.markdown("---")
-st.caption("Made with ❤️ by Your Mood Predictor. Reflect on your day and embrace your feelings!")
+st.caption("Your personal mood diary - Reflect, remember, and grow.")

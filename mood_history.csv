@@ -1,0 +1,4 @@
+Date,Sentence 1,Sentence 2,Predicted Mood,Mood Score,Emoji
+2025-03-15 00:00:00.000000,stomach was not steady,"carefully doing many things, no exercise except 5k run, started using Tums 1/2 pill in the afternoon around 3, 4 pm. Again 1h after dinner",Neutral,0.05,😐
+2025-03-16 10:22:20.973416,pretty good,"slept pretty well last night, mediated 2 x 60 during wakeup at midnight, feelling better, stomach recovered well, mediated 30 min before early morning 5k run
+",Neutral,0.3,😐
