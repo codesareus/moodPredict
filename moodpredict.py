@@ -117,7 +117,7 @@ if st.session_state.submitted_today:
     with col2:
         st.metric("Mood Score", f"{today_entry['Mood Score']:.2f}")
     with col3:
-        st.write("Download")
+        st.metric("Download")
         st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
         if not st.session_state.mood_history.empty:
             with open("mood_history.csv", "rb") as file:
