@@ -119,7 +119,7 @@ if st.session_state.submitted_today:
     with col3:
         st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
         if not st.session_state.mood_history.empty:
-            with open("Mood_history.csv", "rb") as file:
+            with open("mood_history.csv", "rb") as file:
                 st.download_button(
                     label="点击下载History文件",
                     data=file,
