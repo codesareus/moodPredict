@@ -1,3 +1,4 @@
+
 import streamlit as st
 from textblob import TextBlob
 import pandas as pd
@@ -84,7 +85,7 @@ if submitted and sentence1.strip() and sentence2.strip():
         "Sentence 1": sentence1,
         "Sentence 2": sentence2,
         "Predicted Mood": mood,
-        "Mood Score": score,
+        "Mood Score": round(score, 2),
         "Emoji": emoji
     }
     
@@ -110,18 +111,30 @@ if st.session_state.submitted_today:
     ].iloc[-1]  # Get the latest entry for today
     
     st.subheader("Today's Mood")
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Predicted Mood", f"{today_entry['Predicted Mood']} {today_entry['Emoji']}")
     with col2:
         st.metric("Mood Score", f"{today_entry['Mood Score']:.2f}")
+    with col3:
+        st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
+        if not st.session_state.mood_history.empty:
+            with open("Mood_history.csv", "rb") as file:
+                st.download_button(
+                    label="点击下载History文件",
+                    data=file,
+                    file_name="Mood_history.csv",
+                    mime="text/csv"
+                )
+        else:
+            st.error("没有可下载的数据，请先输入数据并保存。")
 
 # Display mood history
 if not st.session_state.mood_history.empty:
     st.subheader("Your Mood History")
     
     # Display dataframe with formatted dates
-    display_df = st.session_state.mood_history.copy()
+    display_df = st.session_state.mood_history.copy().tail(5)
     display_df["Date"] = display_df["Date"].dt.strftime("%Y-%m-%d")
     st.dataframe(display_df.style.format({"Mood Score": "{:.2f}"}))
     
@@ -152,7 +165,7 @@ if not monthly_data.empty:
     full_month_df = full_month_df.merge(monthly_data, on="Date", how="left")
 
     # Plot the data
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(full_month_df["Date"], full_month_df["Mood Score"], 
             marker='o', linestyle='-', color='skyblue', label="Mood Score")
     
@@ -160,7 +173,7 @@ if not monthly_data.empty:
     for date, score, emoji in zip(full_month_df["Date"], full_month_df["Mood Score"], full_month_df["Emoji"]):
         if not pd.isna(score):  # Only plot emojis for days with data
             ax.text(date, score + 0.0002, emoji, 
-                    fontsize=24, ha='center', va='bottom')
+                    fontsize=24, ha='center', va='bottom', color="orange")
     
     # Set x-axis limits to the first and last day of the month
     ax.set_xlim(first_day, last_day)
