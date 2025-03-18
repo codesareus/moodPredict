@@ -5,6 +5,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+import pytz  # Requires `pytz` library
+
+tz = pytz.timezone("America/Chicago")
+today = datetime.now(tz)  # NYC time, regardless of server location
 #from matplotlib.font_manager import FontProperties
 
 # Configuration
@@ -78,7 +82,7 @@ with st.form("daily_entry"):
 # Handle form submission
 if submitted and sentence1.strip() and sentence2.strip():
     mood, score, emoji = analyze_mood(sentence1, sentence2)
-    today = datetime.now()
+   # today = datetime.now()
     
     new_entry = {
         "Date": today,
