@@ -4,39 +4,40 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
-import pytz
+import pytz  # Requires `pytz` library
 
-# Configure timezone (Chicago)
 tz = pytz.timezone("America/Chicago")
-today = datetime.now(tz)  # Timezone-aware datetime object
+today = datetime.now(tz)  # NYC time, regardless of server location
+#from matplotlib.font_manager import FontProperties
 
+# Configuration
 CSV_FILE = "mood_history.csv"
 MOOD_EMOJIS = {
-    'Happy': '😊', 'Sad': '😢', 'Energetic': '💪',
-    'Calm': '🧘', 'Creative': '🎨', 'Stressed': '😰', 'Neutral': '😐'
+    'Happy': '😊', 
+    'Sad': '😢',
+    'Energetic': '💪',
+    'Calm': '🧘',
+    'Creative': '🎨',
+    'Stressed': '😰',
+    'Neutral': '😐'
 }
 
+# Initialize session state and load existing data
 def init_session_state():
     if "mood_history" not in st.session_state:
         if os.path.exists(CSV_FILE):
-            # Read and localize dates to Chicago timezone
-            df = pd.read_csv(CSV_FILE, parse_dates=["Date"])
-            df["Date"] = df["Date"].dt.tz_localize(tz)
-            st.session_state.mood_history = df
+            st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
         else:
             st.session_state.mood_history = pd.DataFrame(columns=[
                 "Date", "Sentence 1", "Sentence 2", 
                 "Predicted Mood", "Mood Score", "Emoji"
             ])
-    
-    # Check submissions using timezone-aware date
-    today_date = today.date()
-    exists = False
-    if not st.session_state.mood_history.empty:
-        exists = today_date in st.session_state.mood_history["Date"].dt.date.values
-    st.session_state.submitted_today = exists
+            
+    if "submitted_today" not in st.session_state:
+        today = datetime.now().date()
+        st.session_state.submitted_today = today in st.session_state.mood_history["Date"].dt.date.values
 
-# Page configuration
+# Configure page
 st.set_page_config(page_title="Mood Diary", page_icon="📔")
 st.title("📔 Daily Mood Diary")
 st.write("Document your daily mood with two sentences!")
@@ -46,6 +47,7 @@ def analyze_mood(sentence1, sentence2):
     analysis = TextBlob(combined_text)
     polarity = analysis.sentiment.polarity
     
+    # Simplified mood detection for example
     if polarity > 0.3:
         mood = "Happy"
     elif polarity < -0.3:
@@ -58,25 +60,31 @@ def analyze_mood(sentence1, sentence2):
 def save_to_csv():
     st.session_state.mood_history.to_csv(CSV_FILE, index=False)
 
-# Initialize app
+# Initialize the app
 init_session_state()
 
 # Main input form
 with st.form("daily_entry"):
     st.subheader("Today's Entry")
-    sentence1 = st.text_area("First sentence:", disabled=st.session_state.submitted_today,
-                           placeholder="How are you feeling today?", height=68)
-    sentence2 = st.text_area("Second sentence:", disabled=st.session_state.submitted_today,
-                           placeholder="What's been on your mind?", height=68)
+    
+    sentence1 = st.text_area("First sentence:", 
+                           disabled=st.session_state.submitted_today,
+                           placeholder="How are you feeling today?", height= 68)
+    
+    sentence2 = st.text_area("Second sentence:", 
+                           disabled=st.session_state.submitted_today,
+                           placeholder="What's been on your mind?", height= 68)
+    
     submitted = st.form_submit_button("Save Today's Entry", 
                                     disabled=st.session_state.submitted_today)
 
-# Handle submission
+# Handle form submission
 if submitted and sentence1.strip() and sentence2.strip():
     mood, score, emoji = analyze_mood(sentence1, sentence2)
+   # today = datetime.now()
     
     new_entry = {
-        "Date": today.astimezone(tz).replace(tzinfo=None),  # Store as naive datetime in Chicago time
+        "Date": today,
         "Sentence 1": sentence1,
         "Sentence 2": sentence2,
         "Predicted Mood": mood,
@@ -84,15 +92,12 @@ if submitted and sentence1.strip() and sentence2.strip():
         "Emoji": emoji
     }
     
-    # Update data
+    # Append the new entry to the CSV file
     new_entry_df = pd.DataFrame([new_entry])
-    header = not os.path.exists(CSV_FILE)
-    new_entry_df.to_csv(CSV_FILE, mode='a', header=header, index=False)
+    new_entry_df.to_csv(CSV_FILE, mode='a', header=not os.path.exists(CSV_FILE), index=False)
     
-    # Reload data with proper timezone
-    df = pd.read_csv(CSV_FILE, parse_dates=["Date"])
-    df["Date"] = df["Date"].dt.tz_localize(tz)
-    st.session_state.mood_history = df
+    # Reload the mood history from the CSV file
+    st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
     
     st.session_state.submitted_today = True
     st.success("Entry saved successfully!")
@@ -101,12 +106,12 @@ if submitted and sentence1.strip() and sentence2.strip():
 elif submitted:
     st.warning("Please fill in both sentences!")
 
-# Display today's mood
+# Display today's mood if available
 if st.session_state.submitted_today:
-    today_date = today.date()
+    today = datetime.now().date()
     today_entry = st.session_state.mood_history[
-        st.session_state.mood_history["Date"].dt.date == today_date
-    ].iloc[-1]
+        st.session_state.mood_history["Date"].dt.date == today
+    ].iloc[-1]  # Get the latest entry for today
     
     st.subheader("Today's Mood")
     col1, col2, col3 = st.columns(3)
@@ -114,58 +119,94 @@ if st.session_state.submitted_today:
         st.metric("Predicted Mood", f"{today_entry['Predicted Mood']} {today_entry['Emoji']}")
     with col2:
         st.metric("Mood Score", f"{today_entry['Mood Score']:.2f}")
+    with col3:
+        st.write("")
+        st.session_state.mood_history = pd.read_csv(CSV_FILE, parse_dates=["Date"])
+        if not st.session_state.mood_history.empty:
+            with open("mood_history.csv", "rb") as file:
+                st.download_button(
+                    label="点击下载History文件",
+                    data=file,
+                    file_name="Mood_history.csv",
+                    mime="text/csv"
+                )
+        else:
+            st.error("没有可下载的数据，请先输入数据并保存。")
 
-# Mood history and visualization
+# Display mood history
 if not st.session_state.mood_history.empty:
-    st.subheader("Mood Timeline (Current Month)")
-    current_month = today.month
-    current_year = today.year
+    st.subheader("Your Mood History")
     
-    monthly_data = st.session_state.mood_history[
-        (st.session_state.mood_history["Date"].dt.month == current_month) &
-        (st.session_state.mood_history["Date"].dt.year == current_year)
-    ]
+    # Display dataframe with formatted dates
+    display_df = st.session_state.mood_history.copy().tail(5)
+    display_df["Date"] = display_df["Date"].dt.strftime("%Y-%m-%d")
+    st.dataframe(display_df.style.format({"Mood Score": "{:.2f}"}))
     
-    if not monthly_data.empty:
-        # Create complete date range for Chicago timezone
-        first_day = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        last_day = (first_day + pd.DateOffset(months=1)) - pd.Timedelta(days=1)
-        date_range = pd.date_range(first_day, last_day, freq="D", tz=tz)
-        
-        full_month_df = pd.DataFrame({"Date": date_range})
-        full_month_df = full_month_df.merge(monthly_data, on="Date", how="left")
-        
-        # Plotting
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(full_month_df["Date"], full_month_df["Mood Score"], 
-                marker='o', linestyle='-', color='skyblue')
-        
-        for date, score, emoji in zip(full_month_df["Date"], full_month_df["Mood Score"], full_month_df["Emoji"]):
-            if not pd.isna(score):
-                ax.text(date, score + 0.02, emoji, fontsize=12, ha='center', va='bottom')
-        
-        ax.set_xlim(first_day, last_day)
-        ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%d\n%a', tz=tz))
-        plt.xticks(rotation=45)
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Mood Score")
-        ax.set_title(f"Mood Timeline - {first_day.strftime('%B %Y')}")
-        st.pyplot(fig)
-        
-        # Add download button
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png")
-        buf.seek(0)
-        st.download_button(
-            label="Download Plot as PNG",
-            data=buf,
-            file_name=f"mood_timeline_{today.strftime('%Y-%m')}.png",
-            mime="image/png"
-        )
-    else:
-        st.info("No data available for the current month.")
+    # Plotting section (current month only)
+# Plotting section (current month only)
+st.subheader("Mood Timeline (Current Month)")
+current_month = datetime.now().month
+current_year = datetime.now().year
+
+#init_session_state()
+
+# Filter data for the current month
+st.session_state.mood_history = display_df
+st.session_state.mood_history["Date"] = pd.to_datetime(st.session_state.mood_history["Date"]).dt.tz_localize(None)
+monthly_data = st.session_state.mood_history[
+    (st.session_state.mood_history["Date"].dt.month == current_month) &
+    (st.session_state.mood_history["Date"].dt.year == current_year)
+]
+
+if not monthly_data.empty:
+    # Create a complete date range for the current month
+    first_day = datetime(current_year, current_month, 1)
+    last_day = datetime(current_year, current_month + 1, 1) - pd.Timedelta(days=1)
+    date_range = pd.date_range(first_day, last_day, freq="D")
+
+    # Create a DataFrame with the full date range
+    full_month_df = pd.DataFrame(date_range, columns=["Date"])
+    full_month_df = full_month_df.merge(monthly_data, on="Date", how="left")
+
+    # Plot the data
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(full_month_df["Date"], full_month_df["Mood Score"], 
+            marker='o', linestyle='-', color='skyblue', label="Mood Score")
+    
+    # Add emojis for days with data
+    for date, score, emoji in zip(full_month_df["Date"], full_month_df["Mood Score"], full_month_df["Emoji"]):
+        if not pd.isna(score):  # Only plot emojis for days with data
+            ax.text(date, score + 0.0002, emoji, 
+                    fontsize=24, ha='center', va='bottom', color="orange")
+    
+    # Set x-axis limits to the first and last day of the month
+    ax.set_xlim(first_day, last_day)
+    
+    # Format x-axis to show only the day of the month
+    ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%d'))  # Show only day
+    plt.xticks(rotation=45)
+    ax.set_xlabel("Day of Month")
+    ax.set_ylabel("Mood Score")
+    ax.set_title(f"Your Mood Over Time ({first_day.strftime('%B %Y')})")  # Show month and year in title
+    ax.grid(True)
+    ax.legend()
+    st.pyplot(fig)
 else:
-    st.info("No mood history available yet. Start by adding your first entry!")
+    st.info("No data available for the current month.")
+    
+    # Download button
+    csv = st.session_state.mood_history.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download Full History",
+        data=csv,
+        file_name="mood_diary.csv",
+        mime="text/csv"
+    )
+
+# Display message if already submitted today
+if st.session_state.submitted_today:
+    st.info("You've already made an entry for today. Come back tomorrow!")
+
 # Footer
 st.markdown("---")
 st.caption("Your personal mood diary - Reflect, remember, and grow.")
