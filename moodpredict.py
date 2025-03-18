@@ -117,12 +117,6 @@ if st.session_state.submitted_today:
 
 # Mood history and visualization
 if not st.session_state.mood_history.empty:
-    st.subheader("Your Mood History")
-    display_df = st.session_state.mood_history.copy().tail(5)
-    display_df["Date"] = display_df["Date"].dt.strftime("%Y-%m-%d")
-    st.dataframe(display_df.style.format({"Mood Score": "{:.2f}"}))
-    
-    # Visualization
     st.subheader("Mood Timeline (Current Month)")
     current_month = today.month
     current_year = today.year
@@ -157,9 +151,21 @@ if not st.session_state.mood_history.empty:
         ax.set_ylabel("Mood Score")
         ax.set_title(f"Mood Timeline - {first_day.strftime('%B %Y')}")
         st.pyplot(fig)
+        
+        # Add download button
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png")
+        buf.seek(0)
+        st.download_button(
+            label="Download Plot as PNG",
+            data=buf,
+            file_name=f"mood_timeline_{today.strftime('%Y-%m')}.png",
+            mime="image/png"
+        )
     else:
         st.info("No data available for the current month.")
-
+else:
+    st.info("No mood history available yet. Start by adding your first entry!")
 # Footer
 st.markdown("---")
 st.caption("Your personal mood diary - Reflect, remember, and grow.")
