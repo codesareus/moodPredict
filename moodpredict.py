@@ -79,7 +79,7 @@ with st.form("daily_entry"):
 # Handle form submission
 if submitted and sentence1.strip() and sentence2.strip():
     mood, score, emoji = analyze_mood(sentence1, sentence2)
-   # today = datetime.now()
+    today = datetime.now()
     
     new_entry = {
         "Date": today,
