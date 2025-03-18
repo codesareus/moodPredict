@@ -6,8 +6,6 @@ import os
 from datetime import datetime
 import pytz  # Requires `pytz` library
 
-tz = pytz.timezone("America/Chicago")
-today = datetime.now(tz)  # NYC time, regardless of server location
 #from matplotlib.font_manager import FontProperties
 
 # Configuration
