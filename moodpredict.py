@@ -121,7 +121,7 @@ if not st.session_state.mood_history.empty:
 
     monthly_data = st.session_state.mood_history[
         (pd.to_datetime(st.session_state.mood_history["Date"]).dt.month == current_month) &
-        (pd.to_datetime(st.session_state.mood_history["Date"]).dt.year == current_year)
+        (pd.to_datetime(st.session_state.mood_history["Date"]).dt.year == current_year)]
     
     if not monthly_data.empty:
         fig, ax = plt.subplots(figsize=(10, 4))
