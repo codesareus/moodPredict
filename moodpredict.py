@@ -72,6 +72,6 @@ with st.container():
     if st.session_state.frame < max_frames:
         st.session_state.frame += 1
         time.sleep(0.05)
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.session_state.frame = 0  # Reset when animation completes
