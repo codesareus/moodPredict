@@ -4,10 +4,3 @@ matplotlib
 datetime
 scikit-learn
 streamlit
-pandas
-yfinance
-pytz
-gtts
-pandas_market_calendars
-textblob
-requests
