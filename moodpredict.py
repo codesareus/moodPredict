@@ -3,33 +3,54 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import time
 
-st.title("Crane Flight Animation")
+st.title("Crane Night Flight Animation")
 
 # Create figure and axis
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.set_facecolor('lightblue')
+ax.set_facecolor('#1A1F2C')  # Dark navy blue background
 
 # Environment setup
 def draw_environment():
-    # Ground
-    ax.fill_between([0, 1000], 0, 50, color='olive', alpha=0.6)
-    # Clouds
-    ax.scatter([200, 600, 800], [400, 350, 450], s=150, c='white', alpha=0.7)
-    # Sun
-    ax.scatter(900, 450, s=800, c='blue', alpha=0.8)
+    # Ground (darker green)
+    ax.fill_between([0, 1000], 0, 50, color='#2D423F', alpha=0.9)
+    
+    # Moon (large and bright)
+    ax.scatter(850, 450, s=2000,  # Larger size
+               c='#FFFCDC',       # Soft yellow-white
+               alpha=0.95,
+               edgecolor='white',
+               linewidth=1.5)
+    
+    # Stars (new addition)
+    ax.scatter(
+        [100, 250, 400, 600, 750, 900],
+        [420, 380, 450, 350, 410, 470],
+        s=15, c='white', alpha=0.7
+    )
+    
+    # Clouds (lighter for contrast)
+    ax.scatter([150, 500, 750], [400, 350, 420], 
+               s=200,             # Larger clouds
+               c='#C7C9C7',       # Light gray
+               alpha=0.3,
+               edgecolor='white') # Subtle outline
+    
     ax.set_xlim(0, 1000)
     ax.set_ylim(0, 500)
     ax.axis('off')
 
 draw_environment()
 
-# Initialize crane
-crane, = ax.plot([], [], marker='o', markersize=20, 
-                markerfacecolor='gray', markeredgecolor='black', linestyle='none')
+# Initialize crane (brighter color for visibility)
+crane, = ax.plot([], [], marker='o', markersize=25, 
+                markerfacecolor='#FFFCDC',  # Match moon color
+                markeredgecolor='white',
+                linestyle='none',
+                alpha=0.9)
 
 # Animation parameters
 max_frames = 150
-frame_delay = 0.05  # seconds
+frame_delay = 0.06  # Slightly slower for better visibility
 
 # Create a placeholder for the plot
 plot_placeholder = st.empty()
@@ -55,7 +76,7 @@ for frame in range(max_frames):
     plot_placeholder.pyplot(fig)
     time.sleep(frame_delay)
     
-    # Clear for next frame (prevent ghosting)
+    # Clear for next frame
     crane.set_data([], [])
 
 # Reset plot after animation
