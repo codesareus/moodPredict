@@ -15,7 +15,7 @@ def draw_environment():
     # Clouds
     ax.scatter([200, 600, 800], [400, 350, 450], s=150, c='white', alpha=0.7)
     # Sun
-    ax.scatter(900, 450, s=300, c='gold', alpha=0.8)
+    ax.scatter(900, 450, s=900, c='gold', alpha=0.8)
     ax.set_xlim(0, 1000)
     ax.set_ylim(0, 500)
     ax.axis('off')
