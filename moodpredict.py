@@ -2,7 +2,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import numpy as np
 
 st.title("Crane Flight Animation")
 st.write("Watch the crane fly across the sky and land gracefully!")
@@ -25,9 +24,9 @@ def draw_environment():
 
 draw_environment()
 
-# Initialize crane
+# Initialize crane (now using a proper line object)
 crane, = ax.plot([], [], marker='o', markersize=20, 
-                markerfacecolor='gray', markeredgecolor='black')
+                markerfacecolor='gray', markeredgecolor='black', linestyle='-')
 
 def init():
     crane.set_data([], [])
@@ -35,21 +34,21 @@ def init():
 
 def update(frame):
     if frame < 50:
-        x = 50 + frame * 8
-        y = 400
+        x = [50 + frame * 8]  # Wrap in list
+        y = [400]
     elif 50 <= frame < 100:
         t = frame - 50
-        x = 450 + t * 8
-        y = 400 - 0.14 * t**2
+        x = [450 + t * 8]
+        y = [400 - 0.14 * t**2]
     else:
-        x = 850
-        y = 50
+        x = [850]
+        y = [50]
         
     crane.set_data(x, y)
     return crane,
 
 ani = animation.FuncAnimation(fig, update, frames=150,
-                              init_func=init, blit=True, repeat=True)
+                              init_func=init, blit=True, interval=50, repeat=True)
 
 # Convert animation to HTML
 with st.container():
