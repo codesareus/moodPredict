@@ -38,8 +38,10 @@ ani = animation.FuncAnimation(fig, animate, frames=len(crane_x), interval=50, bl
 # Display the animation in Streamlit
 st.title("Crane Flying and Landing Animation")
 st.write("Watch the crane fly through the sky, descend, and land on the ground!")
+
+# Use Streamlit's `st.pyplot` to display the initial plot
 st.pyplot(fig)
 
-# To display the animation, we need to use st.write with HTML
+# Use HTML to embed the animation
 st.write("If the animation doesn't play automatically, refresh the page or use the controls below.")
-st.write(ani.to_jshtml(), unsafe_allow_html=True)
+st.components.v1.html(ani.to_jshtml(), height=600)
