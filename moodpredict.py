@@ -9,7 +9,7 @@ st.title("Crane Flight Animation")
 
 # Create figure and axis
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.set_facecolor('black')  # Dark background
+ax.set_facecolor('navy')  # Dark background
 
 # Environment setup
 def draw_environment():
