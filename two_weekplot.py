@@ -3,7 +3,11 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 st.title("Plot the Last 21 Daily Data Points")
+# 添加中文字体支持（示例使用微软雅黑，请确保系统有该字体）
+# 也可以替换为其他中文字体路径如 "simhei.ttf"
+chinese_font = ImageFont.truetype("SimHei.ttf", 12)  # 调整字体大小
 
+fm.fontManager.addfont('SimHei.ttf')
 # Text input area
 data_input = st.text_area("Paste your series of numbers (comma or newline separated):", height=200)
 
