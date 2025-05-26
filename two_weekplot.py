@@ -30,7 +30,7 @@ if data_input:
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
         ax.set_xticks(dates)
-        ax.set_xticklabels([d.strftime("%b %d") for d in dates], rotation=45)
+        ax.set_xticklabels([d.strftime("%m-%d") for d in dates], rotation=45)
         st.pyplot(fig)
 
     except ValueError:
