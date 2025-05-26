@@ -2,14 +2,19 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-from PIL import Image, ImageDraw, ImageFont
+import matplotlib.font_manager as fm
+
+# Add the SimHei font to Matplotlib's font manager
+fm.fontManager.addfont('SimHei.ttf')  # Ensure 'SimHei.ttf' is in your working directory
+
+
 
 st.title("Plot the Last 21 Daily Data Points")
 # 添加中文字体支持（示例使用微软雅黑，请确保系统有该字体）
 # 也可以替换为其他中文字体路径如 "simhei.ttf"
-chinese_font = ImageFont.truetype("SimHei.ttf", 12)  # 调整字体大小
+#chinese_font = ImageFont.truetype("SimHei.ttf", 12)  # 调整字体大小
 
-#fm.fontManager.addfont('SimHei.ttf')
+fm.fontManager.addfont('SimHei.ttf')
 # Text input area
 data_input = st.text_area("Paste your series of numbers (comma or newline separated):", height=200)
 
@@ -30,6 +35,11 @@ if data_input:
         st.write(f"Plotting data for the last {num_points} day(s), ending {today}:")
         
         # Plotting
+        # Set the default font for Matplotlib
+        plt.rcParams['font.family'] = 'sans-serif'
+        plt.rcParams['font.sans-serif'] = ['SimHei']  # Use SimHei for Chinese characters
+        plt.rcParams['axes.unicode_minus'] = False  # Fix negative sign display issues
+
         fig, ax = plt.subplots()
         ax.plot(dates, last_21, marker='o')
         ax.set_title("耳鸣级数 (past 21 days)")
