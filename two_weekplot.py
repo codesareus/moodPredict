@@ -2,7 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-st.title("Plot the Last 14 Daily Data Points")
+st.title("Plot the Last 30 Daily Data Points")
 
 # Text input area
 data_input = st.text_area("Paste your series of numbers (comma or newline separated):", height=200)
@@ -14,7 +14,7 @@ if data_input:
     try:
         # Convert to float and take last 14
         numbers = [float(x) for x in raw_data if x]
-        last_14 = numbers[-14:]
+        last_14 = numbers[-30:]
         num_points = len(last_14)
 
         # Generate dates ending today
@@ -26,7 +26,7 @@ if data_input:
         # Plotting
         fig, ax = plt.subplots()
         ax.plot(dates, last_14, marker='o')
-        ax.set_title("Daily Data (Last 14 Days)")
+        ax.set_title("Daily Data (Last 30 Days)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
         ax.tick_params(axis='x', rotation=45)
