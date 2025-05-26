@@ -1,2 +1,11 @@
+numpy
 matplotlib
+datetime
+scikit-learn
 streamlit
+pandas
+pytz
+pillow
+textblob
+#re
+gtts
