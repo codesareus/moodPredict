@@ -26,7 +26,7 @@ if data_input:
         # Plotting
         fig, ax = plt.subplots()
         ax.plot(dates, last_21, marker='o')
-        ax.set_title("Daily Data (Last 21 Days)")
+        ax.set_title("耳鸣级数 (过去 21 天)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
         ax.set_xticks(dates)
