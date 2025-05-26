@@ -12,10 +12,10 @@ if data_input:
     raw_data = [x.strip() for x in data_input.replace(',', '\n').split('\n')]
     
     try:
-        # Convert to float and take last 14
+        # Convert to float and take last 21
         numbers = [float(x) for x in raw_data if x]
-        last_14 = numbers[-21:]
-        num_points = len(last_14)
+        last_21 = numbers[-21:]
+        num_points = len(last_21)
 
         # Generate dates ending today
         today = datetime.today().date()
@@ -25,8 +25,8 @@ if data_input:
         
         # Plotting
         fig, ax = plt.subplots()
-        ax.plot(dates, last_14, marker='o')
-        ax.set_title("Daily Data (Last 30 Days)")
+        ax.plot(dates, last_21, marker='o')
+        ax.set_title("Daily Data (Last 21 Days)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
         ax.tick_params(axis='x', rotation=45)
