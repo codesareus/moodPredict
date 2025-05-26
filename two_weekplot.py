@@ -25,7 +25,7 @@ if data_input:
         
         # Plotting
         fig, ax = plt.subplots()
-                ax.plot(dates, last_21, marker='o')
+        ax.plot(dates, last_21, marker='o')
         ax.set_title("Daily Data (Last 21 Days)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
