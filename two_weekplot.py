@@ -25,11 +25,12 @@ if data_input:
         
         # Plotting
         fig, ax = plt.subplots()
-        ax.plot(dates, last_21, marker='o')
+                ax.plot(dates, last_21, marker='o')
         ax.set_title("Daily Data (Last 21 Days)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
-        ax.tick_params(axis='x', rotation=45)
+        ax.set_xticks(dates)
+        ax.set_xticklabels([d.strftime("%b %d") for d in dates], rotation=45)
         st.pyplot(fig)
 
     except ValueError:
