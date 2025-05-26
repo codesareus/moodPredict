@@ -30,7 +30,7 @@ if data_input:
         # Plotting
         fig, ax = plt.subplots()
         ax.plot(dates, last_21, marker='o')
-        ax.set_title("er ming grade (past 21 days)")
+        ax.set_title("耳鸣级数 (past 21 days)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Value")
         ax.set_xticks(dates)
