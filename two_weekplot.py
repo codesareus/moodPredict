@@ -54,7 +54,7 @@ if data_input:
             ax.plot(dates, moving_avg, label='7-Day Moving Average', 
                     color='orange', linestyle='--', linewidth=2)
             
-            ax.set_title("Tinnitus Severity Level (21-Day Trend with Moving Average)")
+            ax.set_title("耳鸣级数 (21-Day Trend with Moving Average)")
             ax.set_xlabel("Date (Central Time)")
             ax.set_ylabel("Value")
             ax.set_xticks(dates)
